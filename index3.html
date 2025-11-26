@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Weather App</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Background */
+        body {
+            background: lightblue;
+            background-size: cover;
+            min-height: 100vh;
+        }
+
+        /* Weather main card */
+        .weather-card {
+            display: none;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(15px);
+            color: Black;
+           font-weight: bold;
+
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        #icon {
+            width: 100px;
+        }
+
+        /* Spinner */
+        #loader {
+            display: none;
+        }
+
+        /* Forecast box (glass look like your sample image) */
+        .forecast-box {
+            padding: 18px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            color: Black;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+
+        .forecast-box:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Forecast icons */
+        .forecast-box img {
+            width: 55px;
+        }
+
+        /* Day text */
+        .forecast-box h6 {
+            font-size: 1rem;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Temperature */
+        .forecast-box p {
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+         
+    </style>
+</head>
+
+<body>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4 fw-bold text-dark ">⛅Weather App</h2>
+    
+
+    <!-- Search Box -->
+    <div class="input-group mb-4">
+     <input  type="text" id="cityInput" class="form-control" placeholder=" 🔎Enter city name">
+     
+        <button class="btn btn-primary" onclick="getWeather()">Search</button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="text-center">
+        <div id="loader" class="spinner-border text-light"></div>
+    </div>
+
+    <!-- Weather Card -->
+    <div id="weatherCard" class="weather-card card shadow p-4 mt-3 text-center">
+        <h3 id="cityName"></h3>
+        <img id="icon" src="" alt="">
+        <h2 id="temp"></h2>
+
+        <!-- Toggle Button -->
+        <button class="btn btn-outline-light btn-sm mb-3" onclick="toggleTemp()">Change °C / °F</button>
+
+        <p id="desc" class="text-capitalize"></p>
+        <p><b>Humidity:</b> <span id="humidity"></span>%</p>
+        <p><b>Wind Speed:</b> <span id="wind"></span> km/h</p>
+    </div>
+
+    <!-- Forecast Section -->
+    <h4 class="mt-4 fw-bold text-white">5 Day Forecast</h4>
+    <div id="forecast" class="row g-4 justify-content-between"></div>
+    <div id="about" class="text-center">
+        <h1>About As</h1>
+        <p>Welcome to our Weather App⛅
+           We built this app to help you get accurate and real-time weather information in the simplest way.<br>
+           Our Weather App gives you fast and accurate weather updates for any city. 
+We provide live temperature, humidity, wind speed, and 5-day forecasts to help you plan your day easily. 
+Our goal is to make weather checking simple, quick, and reliable for everyone.<br>
+
+Our app provides:
+ Live temperature updates,
+ Weather descriptions like cloudy, rainy, sunny, 
+ Humidity and wind speed details, 
+ 5-day weather forecast , 
+Easy city search , 
+ Clear and beautiful weather icons <br>
+
+We use trusted data from the OpenWeather API to make sure our reports are correct and updated.  
+Our goal is to help you stay prepared for your day—whether it's rain, sunshine, or wind.<br>
+
+Thank you for using our Weather App</p>
+    </div>
+    
+    
+</div>
+
+<script>
+    let currentTemp = 0;
+    let tempInC = true; // Celsius by default
+
+    async function getWeather() {
+        const city = document.getElementById("cityInput").value;
+
+        if (city === "") {
+            alert("Please enter a city name");
+            return;
+        }
+
+        const apiKey = "7a2997298b5aad4876f11b48a285d8e7";
+
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+        const forecastURL = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`;
+
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("weatherCard").style.display = "none";
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.cod === "404") {
+                alert("City not found!");
+                return;
+            }
+
+            // Set values
+            currentTemp = data.main.temp;
+            document.getElementById("cityName").innerText = data.name;
+            document.getElementById("temp").innerHTML = currentTemp + "°C";
+            document.getElementById("desc").innerText = data.weather[0].description;
+            document.getElementById("humidity").innerText = data.main.humidity;
+            document.getElementById("wind").innerText = data.wind.speed;
+
+            // Weather icon
+            const iconCode = data.weather[0].icon;
+            document.getElementById("icon").src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+            document.getElementById("weatherCard").style.display = "block";
+
+            // Fetch forecast
+            getForecast(forecastURL);
+
+        } catch (error) {
+            alert("Error fetching weather");
+        } finally {
+            document.getElementById("loader").style.display = "none";
+        }
+    }
+
+    // Toggle Celsius/Fahrenheit
+    function toggleTemp() {
+        if (tempInC) {
+            let f = (currentTemp * 9/5) + 32;
+            document.getElementById("temp").innerHTML = f.toFixed(2) + "°F";
+        } else {
+            document.getElementById("temp").innerHTML = currentTemp + "°C";
+        }
+        tempInC = !tempInC;
+    }
+
+    // 5-day forecast
+    async function getForecast(url) {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const forecastDiv = document.getElementById("forecast");
+        forecastDiv.innerHTML = "";
+
+        // Pick data every 24 hours (8 intervals of 3 hours)
+        for (let i = 0; i < data.list.length; i += 8) {
+            const day = data.list[i];
+            const date = new Date(day.dt_txt).toLocaleDateString("en-IN", { weekday: "short" });
+            const icon = day.weather[0].icon;
+            const temp = day.main.temp;
+
+            forecastDiv.innerHTML += `
+                <div class="col-6 col-md-2">
+                    <div class="forecast-box text-center">
+                        <h6>${date}</h6>
+                        <img src="https://openweathermap.org/img/wn/${icon}@2x.png">
+                        <p>${Math.round(temp)}°C</p>
+                    </div>
+                </div>`;
+        }
+    }
+</script>
+
+</body>
+</html>
